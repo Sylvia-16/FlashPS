@@ -46,7 +46,7 @@ source activate pytorch
 cd image-inpainting/scheduler
 
 # run flashps server
-bash run_server.sh
+bash run_server_sd2_cb.sh
 bash scripts/test_cb_sd2.sh
 # kill the server
 bash scripts/kill_gpu_processes.sh
