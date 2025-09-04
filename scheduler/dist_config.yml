@@ -1,0 +1,5 @@
+nodes:
+  - rank: 0
+    address: "dgx-51"
+    gpu_count: 3
+port: 10000

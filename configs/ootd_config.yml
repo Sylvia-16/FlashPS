@@ -1,0 +1,23 @@
+# basic configs
+launch_script: "run_ootd.py"
+num_inference_steps: 20
+batch_size: 1
+# edit related configs
+use_cached_o: False
+use_cached_kv: False
+save_latents: False
+save_o: False
+save_kv: False
+cached_o_folder: "/app/ootd_cache/cached_o"
+cloth_path: "/app/ootd/run/examples/garment/00055_00.jpg"
+model_path: "/app/ootd/run/examples/model/01008_00.jpg"
+masked_vton_img_path: "/app/image-edit-data/masked_vton_img.png"
+ootd_mask_path: "/app/image-edit-data/mask.png"
+profile: False
+device_num: 0
+image_scale: 2.0
+n_samples: 1
+seed: 1449
+category: 0
+async_copy: False
+test_varlen: False

@@ -1,0 +1,25 @@
+# basic configs
+launch_script: "run_ootd.py"
+num_inference_steps: 20
+batch_size: 1
+# edit related configs
+use_cached_o: False
+use_cached_kv: False
+save_latents: False
+save_o: True
+save_kv: False
+cached_o_folder: "/app/ootd_cache/cached_o"
+# cached_kv_folder: "/project/infattllm/xjiangbp/ootd/cached_kv"
+# cached_latents_folder: "/project/infattllm/xjiangbp/ootd/cached_latents"
+cloth_path: "/app/ootd/run/examples/garment/03244_00.jpg"
+model_path: "/app/ootd/run/examples/model/model_4.png"
+# masked_vton_img_path: "/home/xjiangbp/image-inpainting/scheduler/masked_vton_img.png"
+# ootd_mask_path: "/home/xjiangbp/image-inpainting/scheduler/mask.png"
+profile: False
+device_num: 0
+image_scale: 2.0
+n_samples: 1
+seed: 1449
+category: 0
+async_copy: False
+test_varlen: False

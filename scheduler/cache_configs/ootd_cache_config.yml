@@ -1,0 +1,3 @@
+cached_o_folder: "/app/ootd_cache/cached_o"
+cached_kv_folder: "/app/image-inpainting/green_plant/cached_kv"
+cached_latents_folder: "/app/image-inpainting/green_plant/cached_latents"
