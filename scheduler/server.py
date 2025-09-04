@@ -2297,7 +2297,7 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     if args.pipeline_name == "SD2":
-        args.cache_config = "/home/xjiangbp/image-inpainting/scheduler/sd2_cache_config.yml"
+        args.cache_config = "/home/xjiangbp/image-inpainting/scheduler/cache_configs/sd2_cache_config.yml"
     elif args.pipeline_name == "OOTD_HD" or args.pipeline_name == "OOTD_DC":
         args.cache_config = "/app/image-inpainting/scheduler/cache_configs/ootd_cache_config.yml"
     else:
