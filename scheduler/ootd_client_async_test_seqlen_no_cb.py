@@ -44,12 +44,7 @@ def setup_logging(log_file, name=None):
     return logger
 
 # Setup main log directory
-log_dir = "/app/image-inpainting/scheduler/test_ootd_e2e"
-os.makedirs(log_dir, exist_ok=True)
-log_dir = log_dir + f"/ootd_client_no_cb_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-os.makedirs(log_dir, exist_ok=True)
-log_file = os.path.join(log_dir, f"ootd_client.log")
-logger = setup_logging(log_file)
+
 
 # Dictionary to store loggers for different seqlens
 seqlen_list_loggers = {}
@@ -321,6 +316,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
     request_timestamps = np.load(args.trace_path)
     assert args.action == "inference"
+    log_dir = "/app/image-inpainting/scheduler/test_ootd_e2e"
+    os.makedirs(log_dir, exist_ok=True)
+    log_dir = log_dir + f"/ootd_client_no_cb_{args.rps}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    os.makedirs(log_dir, exist_ok=True)
+    log_file = os.path.join(log_dir, f"ootd_client.log")
+    logger = setup_logging(log_file)
     logger.info(f"Parsed arguments: service-id={args.service_id}, action={args.action}, rps={args.rps}, interval={args.interval}, timeout={args.timeout}")
 
     # Run the async function

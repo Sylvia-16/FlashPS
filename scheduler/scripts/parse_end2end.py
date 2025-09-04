@@ -131,29 +131,31 @@ if __name__ == "__main__":
         
         # Process both cb and no_cb directories
     for cb_type in ['teacache','flashps','no_cb']:
-        pattern = os.path.join(args.root_folder,f'ootd_client_{cb_type}_*')
-        print("pattern",pattern)
-        matching_dir = glob.glob(pattern)
-        print("matching_dir",matching_dir)
-        if len(matching_dir) > 0:
-            # Get the first subdirectory which contains the logs
-            log_folder = matching_dir[0]
-            # log_folder = cb_dir
-            if log_folder:
-                result = parse_log_for_one_folder(log_folder)
-                
-                # Process each seqlen result
-                for seqlen_name, metrics in result.items():
-                    row = {
-                        'name': cb_type,
-                        'avg_latency': metrics['avg_latency'],
-                        'p99_latency': metrics['p99_latency'],
-                        'p95_latency': metrics['p95_latency'],
-                        'p99_inference_latency': metrics['p99_inference_latency'],
-                        'p95_inference_latency': metrics['p95_inference_latency'],
-                        'avg_inference_latency': metrics['avg_inference_latency']
-                    }
-                    all_results.append(row)
+        for rps in ['1.0','3.25','4.0']:
+            pattern = os.path.join(args.root_folder,f'ootd_client_{cb_type}_{rps}*')
+            print("pattern",pattern)
+            matching_dir = glob.glob(pattern)
+            print("matching_dir",matching_dir)
+            if len(matching_dir) > 0:
+                # Get the first subdirectory which contains the logs
+                log_folder = matching_dir[0]
+                # log_folder = cb_dir
+                if log_folder:
+                    result = parse_log_for_one_folder(log_folder)
+                    
+                    # Process each seqlen result
+                    for seqlen_name, metrics in result.items():
+                        row = {
+                            'name': cb_type,
+                            'rps': rps,
+                            'avg_latency': metrics['avg_latency'],
+                            'p99_latency': metrics['p99_latency'],
+                            'p95_latency': metrics['p95_latency'],
+                            'p99_inference_latency': metrics['p99_inference_latency'],
+                            'p95_inference_latency': metrics['p95_inference_latency'],
+                            'avg_inference_latency': metrics['avg_inference_latency']
+                        }
+                        all_results.append(row)
     
     # Convert to DataFrame and save as CSV
     df = pd.DataFrame(all_results)

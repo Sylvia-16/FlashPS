@@ -1,2 +1,4 @@
 python ootd_client_async.py --edit_config_path /app/image-inpainting/configs/ootd_config.yml && \
+python ootd_client_async_test_seqlen_no_cb_teacache.py --trace_path client_traces/trace_rps1.0_duration120_20250509_132419/trace_1.0_120.npy --rps 1.0 --interval 120 && \
+python ootd_client_async_test_seqlen_no_cb_teacache.py --trace_path client_traces/trace_rps3.25_duration120_20250514_234326/trace_3.25_120.npy --rps 3.5 --interval 120 && \
 python ootd_client_async_test_seqlen_no_cb_teacache.py --trace_path client_traces/trace_rps4.0_duration120_20250514_222852/trace_4.0_120.npy --rps 4.0 --interval 120
