@@ -28,7 +28,7 @@ conda activate flashps
 
 ## End-to-end Performance of OOTD
 ```bash
-cd scheduler/
+cd /app/image-inpainting/scheduler/
 # run server to test teacache and diffusers baseline
 bash run_server_ootd_no_cb.sh 
 bash /app/image-inpainting/scheduler/test_ootd_teacache.sh
@@ -79,5 +79,6 @@ As generating all images takes hours, we have cached them for evaluation.
 
 Evaluate Image Quality:
 ```
+cd /app/image-inpainting/
 bash scripts/test_quality.sh 
 ```
