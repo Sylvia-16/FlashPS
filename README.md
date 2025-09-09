@@ -69,6 +69,7 @@ bash kill_server.sh
 python scripts/parse_end2end.py
 
 ```
+You may compare the figure with Figure 12 in the paper.
 
 ## End-to-end Performance of SD2
 Because SD2's baseline FISEdit is not compatible with advanced GPUs, we have provided a machine with a pre-configured environment to facilitate execution for review purposes.
@@ -87,29 +88,53 @@ source activate pytorch
 # Go to the project directory
 cd /home/ubuntu/image-inpainting/scheduler
 
-# run flashps server
+# Spin up the server to evaluate FlashPS. It may take two minutes to start the server.
+# When the server successfully starts, it will print
+# "INFO:     Uvicorn running on http://0.0.0.0:8005 (Press CTRL+C to quit)"
+# on the console.
 bash run_server_sd2_cb.sh
+
+# Send requests to evaluate FlashPS.
 bash scripts/test_cb_sd2.sh
+
 # kill the server
 bash scripts/kill_gpu_processes.sh
 
-# run server for testing diffusers
+
+# Spin up the server to evaluate Diffusers. It may take two minutes to start the server.
+# When the server successfully starts, it will print
+# "INFO:     Uvicorn running on http://0.0.0.0:8005 (Press CTRL+C to quit)"
+# on the console.
 bash run_server_sd2_no_cb.sh
-# test diffusers
+
+# Send requests to evaluate Diffusers.
 bash scripts/test_no_cb_sd2.sh
+
+# kill the server
 bash scripts/kill_gpu_processes.sh
 
 # activate fisedit environment
 conda activate fisedit
 source ~/Hetu/hetu.exp
 
-# run server for testing fisedit
+# Spin up the server to evaluate FisEdit. It may take two minutes to start the server.
+# When the server successfully starts, it will print
+# "INFO:     Uvicorn running on http://0.0.0.0:8005 (Press CTRL+C to quit)"
+# on the console.
 bash run_server_fisedit_no_cb.sh
+
+# Send requests to evaluate FisEdit.
 bash scripts/test_fisedit_e2e.sh
-# analyze the result
+
+# kill the server
+bash scripts/kill_gpu_processes.sh
+
+# analyze and plot the result. The script will print out the path to the figure.
 python scripts/parse_end2end.py 
 
 ```
+You may compare the figure with Figure 12 in the paper.
+
 ## Image Quality Assessment
 Our image quality evaluation ensures that **performance optimizations** do not compromise **output quality**. 
 As generating all images takes hours, we have cached them for evaluation.
