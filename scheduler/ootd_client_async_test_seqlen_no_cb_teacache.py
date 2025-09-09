@@ -300,7 +300,6 @@ def run_inference_async_with_seqlen(
     return response_list
     
 if __name__ == "__main__":
-    logger.info("Starting flux client")
     
     parser = argparse.ArgumentParser()
     parser.add_argument("--service-id", type=str, default=None)

@@ -13,7 +13,12 @@ from torchmetrics.multimodal.clip_score import CLIPScore
 from torchmetrics.image.fid import FrechetInceptionDistance
 from torchmetrics.image import StructuralSimilarityIndexMeasure
 from torchmetrics.image import PeakSignalNoiseRatio
+import warnings
 
+# Suppress warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", message=".*clean_up_tokenization_spaces.*")
+warnings.filterwarnings("ignore", message=".*weights_only.*")
 def preprocess_image(img_path):
     """Preprocess the image for inception model"""
     img = cv2.imread(img_path)
@@ -254,6 +259,7 @@ def main():
     parser.add_argument('--dir3', type=str, default='/app/ootd/new_standard_img_ootd_teacache_4/',help='Third directory containing images')
     parser.add_argument('--name1', type=str,default='a')
     parser.add_argument('--name2', type=str,default='teacache')
+    parser.add_argument('--model_name', type=str, default=None)
     parser.add_argument('--prompt_type', type=str,default=None)
     parser.add_argument('--prompt_folder', type=str, default=None)
     args = parser.parse_args()
@@ -265,7 +271,7 @@ def main():
     #     print("No matching image files found between the two directories.")
     #     return
     
-    
+    print(f"=====Image Quality of model {args.model_name}======")
     ssim1 = cal_quality_for_image_pairs(matching_pairs, args.name1)
     ssim2 = cal_quality_for_image_pairs(matching_pairs1, args.name2)
     print(f"{args.name1} SSIM: {ssim1}")

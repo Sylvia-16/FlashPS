@@ -6,6 +6,7 @@ import glob
 import json
 import pandas as pd
 from collections import defaultdict
+import matplotlib.pyplot as plt
 
 def parse_log_for_one_log_file(log_file):
     """
@@ -133,11 +134,10 @@ if __name__ == "__main__":
     for cb_type in ['teacache','flashps','no_cb']:
         for rps in ['1.0','3.25','4.0']:
             pattern = os.path.join(args.root_folder,f'ootd_client_{cb_type}_{rps}*')
-            print("pattern",pattern)
             matching_dir = glob.glob(pattern)
-            print("matching_dir",matching_dir)
             if len(matching_dir) > 0:
                 # Get the first subdirectory which contains the logs
+                matching_dir.sort(key=lambda x: os.path.getctime(x), reverse=True)
                 log_folder = matching_dir[0]
                 # log_folder = cb_dir
                 if log_folder:
@@ -160,6 +160,30 @@ if __name__ == "__main__":
     # Convert to DataFrame and save as CSV
     df = pd.DataFrame(all_results)
     df.to_csv(args.output_csv, index=False)
+     # Create line plot
+    if not df.empty and 'rps' in df.columns and 'avg_latency' in df.columns:
+        plt.figure(figsize=(10, 6))
+        
+        # Plot lines for each cb_type
+        for cb_type in df['name'].unique():
+            cb_data = df[df['name'] == cb_type].sort_values('rps')
+            plt.plot(cb_data['rps'], cb_data['avg_latency'], 
+                    marker='o', linewidth=2, label=cb_type)
+        
+        plt.xlabel('RPS (Requests Per Second)')
+        plt.ylabel('Average Latency (seconds)')
+        plt.title('Average Latency vs RPS by Cache Type')
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+        
+        # Save plot
+        plot_path = args.output_csv.replace('.csv', '_plot.png')
+        plt.savefig(plot_path, dpi=300, bbox_inches='tight')
+        print(f"Saved plot to {plot_path}")
+        
+       
+    else:
+        print("No data available for plotting")
     print(f"Saved results to {args.output_csv}")
 
 
