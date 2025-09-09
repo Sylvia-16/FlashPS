@@ -132,7 +132,7 @@ if __name__ == "__main__":
         
         # Process both cb and no_cb directories
     for cb_type in ['teacache','flashps','no_cb']:
-        for rps in ['1.0','3.25','4.0']:
+        for rps in ['1.0','2.25','3.25',]:
             pattern = os.path.join(args.root_folder,f'ootd_client_{cb_type}_{rps}*')
             matching_dir = glob.glob(pattern)
             if len(matching_dir) > 0:
@@ -147,7 +147,7 @@ if __name__ == "__main__":
                     for seqlen_name, metrics in result.items():
                         row = {
                             'name': cb_type,
-                            'rps': rps,
+                            'rps': float(rps),
                             'avg_latency': metrics['avg_latency'],
                             'p99_latency': metrics['p99_latency'],
                             'p95_latency': metrics['p95_latency'],
@@ -175,7 +175,6 @@ if __name__ == "__main__":
         plt.title('Average Latency vs RPS by Cache Type')
         plt.legend()
         plt.grid(True, alpha=0.3)
-        
         # Save plot
         plot_path = args.output_csv.replace('.csv', '_plot.png')
         plt.savefig(plot_path, dpi=300, bbox_inches='tight')

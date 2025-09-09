@@ -112,7 +112,7 @@ async def run_inference_async(
     log = custom_logger or logger
     try:
         start_time = time.time()
-        log.info(f"Sending request to {service_id} at {server_url}, sequence_id: {sequence_id}")
+        # log.info(f"Sending request to {service_id} at {server_url}, sequence_id: {sequence_id}")
         
         # 添加序列ID到请求中，用于服务器端排序
         if "metadata" not in inputs:
@@ -126,7 +126,7 @@ async def run_inference_async(
             result = await response.json()
             end_time = time.time()
             latency = end_time - start_time
-            log.info(f"Request completed with latency: {latency:.2f}s, sequence_id: {sequence_id}")
+            # log.info(f"Request completed with latency: {latency:.2f}s, sequence_id: {sequence_id}")
             return {"response_json": result, "latency": latency}
     except Exception as e:
         log.error(f"Error in run_inference_async: {e}")
@@ -146,18 +146,19 @@ async def send_requests_async(
     """Send requests asynchronously following a pre-generated Poisson trace"""
     log = custom_logger or logger
     
-    number_of_requests = len(request_timestamps)
-    log.info(f"Generated Poisson trace with {number_of_requests} requests over {interval} seconds")
+    # 1. 生成泊松分布trace
     
-    # 准备请求数据
+    number_of_requests = len(request_timestamps)
+    # log.info(f"Generated Poisson trace with {number_of_requests} requests over {interval} seconds")
+    
+    # 2. 准备请求数据
     ordered_requests = []
     for req_idx in range(number_of_requests):
         ordered_requests.append((req_idx, inputs[req_idx]))
     
-    # 发送请求
+    # 3. 发送请求
     all_tasks = []
-    timeout_obj = aiohttp.ClientTimeout(total=timeout)
-    async with aiohttp.ClientSession(timeout=timeout_obj) as session:
+    async with aiohttp.ClientSession() as session:
         start_time = time.time()
         for req_idx, (timestamp, req_inputs) in enumerate(zip(request_timestamps, ordered_requests)):
             # 等待直到预定的时间
@@ -166,34 +167,54 @@ async def send_requests_async(
             if wait_time > 0:
                 await asyncio.sleep(wait_time)
             
-            log.info(f"Sending request {req_idx+1} of {number_of_requests}, "
-                    f"time since start: {time.time() - start_time:.2f}s, sequence_id: {req_idx}")
+            # Round-robin server selection
+            current_server_url = server_url
+
+            # log.info(f"Sending request {req_idx+1} of {number_of_requests} to {current_server_url}, "
+            #         f"time since start: {time.time() - start_time:.2f}s, sequence_id: {req_idx}")
             
             # 创建异步任务发送请求
             task = asyncio.create_task(
-                run_inference_async(service_id, req_inputs[1], server_url, session, 
+                run_inference_async(service_id, req_inputs[1], current_server_url, session, 
                                  custom_logger=log, sequence_id=req_idx)
             )
             all_tasks.append(task)
             
         # 等待所有请求完成并收集响应
-        log.info(f"Waiting for {len(all_tasks)} requests to complete...")
-        responses = await asyncio.gather(*all_tasks)
+        # log.info(f"Waiting for {len(all_tasks)} requests to complete...")
+        responses = await asyncio.gather(*all_tasks, return_exceptions=True)
     
-    # Print latency statistics
-    latencies = [r["latency"] for r in responses]
-    log.info(f"Request Latencies: {latencies}")
-    inference_latencies = [r["response_json"]["results"]["inference_latency"] for r in responses]
-    log.info(f"Inference latencies: {inference_latencies}")
-    avg_latency = sum(latencies) / len(latencies)
+    # Filter out exceptions and collect successful responses
+    successful_responses = []
+    for idx, response in enumerate(responses):
+        if isinstance(response, Exception):
+            log.error(f"Request {idx} failed with error: {response}")
+        else:
+            successful_responses.append(response)
     
-    stats_summary = "\n========== Latency Statistics:"
-    stats_summary += f"\nAverage_latency: {avg_latency:.2f} seconds"
-    stats_summary += f"\nMin_latency: {min(latencies):.2f} seconds"
-    stats_summary += f"\nMax_latency: {max(latencies):.2f} seconds"
-    stats_summary += f"\n=========="
-    
-    log.info(stats_summary)
+    # Print statistics only if there are successful responses
+    if successful_responses:
+        # Print latency statistics
+        latencies = [r["latency"] for r in successful_responses]
+        log.info(f"Request Latencies: {latencies}")
+        try:
+            inference_latencies = [r["response_json"]["results"]["inference_latency"] for r in successful_responses]
+            log.info(f"Inference latencies: {inference_latencies}")
+        except KeyError:
+            log.warning("Some responses are missing inference_latency data")
+        
+        avg_latency = sum(latencies) / len(latencies)
+        
+        stats_summary = "\n========== Latency Statistics:"
+        stats_summary += f"\nSuccessful requests: {len(successful_responses)}/{len(responses)}"
+        stats_summary += f"\nAverage_latency: {avg_latency:.2f} seconds"
+        stats_summary += f"\nMin_latency: {min(latencies):.2f} seconds"
+        stats_summary += f"\nMax_latency: {max(latencies):.2f} seconds"
+        stats_summary += f"\n=========="
+        
+        log.info(stats_summary)
+    else:
+        log.error("All requests failed. No latency statistics available.")
     
     return responses
 

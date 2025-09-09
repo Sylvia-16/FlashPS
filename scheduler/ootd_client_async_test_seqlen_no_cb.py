@@ -112,7 +112,7 @@ async def run_inference_async(
     log = custom_logger or logger
     try:
         start_time = time.time()
-        log.info(f"Sending request to {service_id} at {server_url}, sequence_id: {sequence_id}")
+        # log.info(f"Sending request to {service_id} at {server_url}, sequence_id: {sequence_id}")
         
         # 添加序列ID到请求中，用于服务器端排序
         if "metadata" not in inputs:
@@ -126,7 +126,7 @@ async def run_inference_async(
             result = await response.json()
             end_time = time.time()
             latency = end_time - start_time
-            log.info(f"Request completed with latency: {latency:.2f}s, sequence_id: {sequence_id}")
+            # log.info(f"Request completed with latency: {latency:.2f}s, sequence_id: {sequence_id}")
             return {"response_json": result, "latency": latency}
     except Exception as e:
         log.error(f"Error in run_inference_async: {e}")
@@ -147,7 +147,7 @@ async def send_requests_async(
     log = custom_logger or logger
     
     number_of_requests = len(request_timestamps)
-    log.info(f"Generated Poisson trace with {number_of_requests} requests over {interval} seconds")
+    # log.info(f"Generated Poisson trace with {number_of_requests} requests over {interval} seconds")
     
     # 准备请求数据
     ordered_requests = []
@@ -166,8 +166,8 @@ async def send_requests_async(
             if wait_time > 0:
                 await asyncio.sleep(wait_time)
             
-            log.info(f"Sending request {req_idx+1} of {number_of_requests}, "
-                    f"time since start: {time.time() - start_time:.2f}s, sequence_id: {req_idx}")
+            # log.info(f"Sending request {req_idx+1} of {number_of_requests}, "
+                    # f"time since start: {time.time() - start_time:.2f}s, sequence_id: {req_idx}")
             
             # 创建异步任务发送请求
             task = asyncio.create_task(
@@ -177,7 +177,7 @@ async def send_requests_async(
             all_tasks.append(task)
             
         # 等待所有请求完成并收集响应
-        log.info(f"Waiting for {len(all_tasks)} requests to complete...")
+        # log.info(f"Waiting for {len(all_tasks)} requests to complete...")
         responses = await asyncio.gather(*all_tasks)
     
     # Print latency statistics
