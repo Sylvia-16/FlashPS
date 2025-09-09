@@ -75,11 +75,12 @@ You may compare the figure with Figure 12 in the paper.
 Our image quality evaluation ensures that **performance optimizations** do not compromise **output quality**. 
 As generating all images takes hours, we have cached them for evaluation.
 
-Evaluate Image Quality:
+Evaluate Image Quality. This may take minutes.
 ```
 cd /app/image-inpainting/
 bash scripts/test_quality.sh 
 ```
+You may compare the printed results with those in Table 2 in the paper.
 
 ## End-to-end Performance of SD2
 Because SD2's baseline FISEdit is not compatible with advanced GPUs, we have provided a machine with a pre-configured environment to facilitate execution for review purposes.
@@ -144,3 +145,15 @@ python scripts/parse_end2end.py
 
 ```
 You may compare the figure with Figure 12 in the paper.
+
+## Distribution of Mask Ratios
+
+In the same machine, which is used to evaluate SD2. 
+```bash
+# Go to the trace directory
+cd /home/ubuntu/plot_mask_ratio
+
+# Plot the distribution
+python3 plot_mask_ratio_2traces.py
+```
+You may compare the plot /home/ubuntu/plot_mask_ratio/mask_ratio_2traces.pdf with the Figure 3 in the paper.

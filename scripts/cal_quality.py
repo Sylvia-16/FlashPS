@@ -281,7 +281,7 @@ def main():
         images2 = [pair[1] for pair in matching_pairs]
         images3 = [pair[1] for pair in matching_pairs1]
         clip_score = cal_clip(images1, args.prompt_folder, args.prompt_type)
-        print("standard clip:",clip_score)
+        print("diffusers clip:",clip_score)
 
         clip_score = cal_clip(images2, args.prompt_folder, args.prompt_type)
         print(f"{args.name1} clip:",clip_score)
