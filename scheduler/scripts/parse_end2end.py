@@ -170,11 +170,16 @@ if __name__ == "__main__":
             plt.plot(cb_data['rps'], cb_data['avg_latency'], 
                     marker='o', linewidth=2, label=cb_type)
         
-        plt.xlabel('RPS (Requests Per Second)')
-        plt.ylabel('Average Latency (seconds)')
-        plt.title('Average Latency vs RPS by Cache Type')
-        plt.legend()
+        plt.xlabel('RPS (Requests Per Second)', fontsize=16)
+        plt.ylabel('Average Latency (seconds)', fontsize=16)
+        plt.title('Average Latency vs RPS', fontsize=18)
+        plt.legend(fontsize=12)
         plt.grid(True, alpha=0.3)
+        
+        # Set x-axis to use actual RPS values as positions
+        all_rps = sorted(df['rps'].unique())
+        plt.xticks(all_rps, all_rps, fontsize=14)
+        plt.yticks(fontsize=12)
         # Save plot
         plot_path = args.output_csv.replace('.csv', '_plot.png')
         plt.savefig(plot_path, dpi=300, bbox_inches='tight')
