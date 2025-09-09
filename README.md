@@ -13,9 +13,13 @@ ssh ubuntu@<IP_ADDRESS>
 docker pull jiangxiaoxiao/flashps:latest
 
 # Run the following command to spin up the container. This may take a few minutes.
-docker run -it --rm --name flashps-ae --runtime=nvidia --gpus all --shm-size=16g \
+docker run -d --name flashps-ae --runtime=nvidia --gpus all --shm-size=16g \
 -e NVIDIA_VISIBLE_DEVICES=all -e CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
-jiangxiaoxiao/flashps bash
+-e CONDA_DEFAULT_ENV="" \
+-e CONDA_AUTO_ACTIVATE_BASE=false \
+jiangxiaoxiao/flashps sleep infinity
+
+docker exec -it flashps-ae bash
 
 # Activate the environment
 conda activate flashps
