@@ -6,7 +6,7 @@ To simplify reproducibility, we provide an off-the-shelf Docker image, `jiangxia
 ## Run Flashps with Docker
 We have pulled the image on the provided machine, as its size is nearly 100 GiB.
 ```bash
-# We will add your public key to the machine. You can log the machine with your private key by replacing the <IP_ADDRESS> with the actual IP.
+# We will add your public key to the machine. You can log in to the machine with your private key by replacing the <IP_ADDRESS> with the actual IP.
 ssh ubuntu@<IP_ADDRESS>
 
 # We have pulled the image on the provided machine. You can skip this. On your machine, you can pull the prebuilt Docker image with the following command.
@@ -19,7 +19,7 @@ docker run -d --name flashps-ae --runtime=nvidia --gpus all --shm-size=16g \
 -e CONDA_AUTO_ACTIVATE_BASE=false \
 jiangxiaoxiao/flashps sleep infinity
 
-docker exec -it flashps-ae bash
+docker exec -it flashps-ae zsh
 
 # Activate the environment
 conda activate flashps
@@ -29,25 +29,59 @@ conda activate flashps
 ## End-to-end Performance of OOTD
 ```bash
 cd /app/image-inpainting/scheduler/
-# run server to test teacache and diffusers baseline
-bash run_server_ootd_no_cb.sh 
+
+# Spin up the server to test TeaCache and diffusers baseline. It may take two minutes to start the server.
+# When the server successfully starts, it will print
+# "INFO:     Uvicorn running on http://0.0.0.0:8005 (Press CTRL+C to quit)"
+# on the console.
+
+bash run_server_ootd_no_cb.sh
+
+# Send requests to the server. Note that the first 10 requests are for warm-up purposes.
+# For each baseline, we send requests with different RPS. 
+
+# Send requests to evaluate the baseline TeaCache.
 bash /app/image-inpainting/scheduler/test_ootd_teacache.sh
+
+# Send requests to evaluate the baseline diffusers.
 bash /app/image-inpainting/scheduler/test_ootd_diffusers.sh
-# kill the server
+
+# Remember to kill the server.
 bash kill_server.sh
 
-# run server to test flashps baseline
+# Spin up the server to test FlashPS baseline. It may take two minutes to start the server.
+# When the server successfully starts, it will print
+# "INFO:     Uvicorn running on http://0.0.0.0:8005 (Press CTRL+C to quit)"
+# on the console.
+
 bash run_server_ootd.sh
+
+# Send requests to evaluate FlashPS.
 bash /app/image-inpainting/scheduler/test_ootd_flashps.sh
-# analyze the result 
-python scripts/parse_end2end.py 
+
+# Remember to kill the server.
+bash kill_server.sh
+
+# Analyze and plot the results. The script will print out the path to the figure.
+python scripts/parse_end2end.py
+
 ```
-When the server starts successfully, it will output information like "INFO: Uvicorn running on http://0.0.0.0:8005 (Press CTRL+C to quit)" in the log. Please wait to see this message before starting the client.
+
 ## End-to-end Performance of SD2
 Because SD2's baseline FISEdit is not compatible with advanced GPUs, we have provided a machine with a pre-configured environment to facilitate execution for review purposes.
-```bash
+We will add your public key to the machine. You can log in to the machine with your private key by replacing the <SD2_IP_ADDRESS> with the actual IP.
+Please comment us on the HotCRP for the IP address.
 
+```bash
+ssh ubuntu@<SD2_IP_ADDRESS>
+```
+
+
+```bash
+# Initialize the environment
 source activate pytorch
+
+# Go to the project directory
 cd /home/ubuntu/image-inpainting/scheduler
 
 # run flashps server
