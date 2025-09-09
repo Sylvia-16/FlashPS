@@ -1,9 +1,13 @@
 # Artifact Evaluation for Eurosys 2026
 This guide provides step-by-step instructions to reproduce the experiments and results presented in our Flashps paper. Follow these steps to validate our claims regarding **performance improvements** and **image quality preservation**.
 
-To simplify reproducibility, we provide an off-the-shelf Docker image, `jiangxiaoxiao/flashps` which includes all the dependencies and configurations required to run the experiments. This eliminates the need for complex environment setup. We also provided AWS EC2 instances for evaluation. Please comment on us in the HotCRP with your public key to get the IP address and access the machine.
+To simplify reproducibility, we provide an off-the-shelf Docker image, `jiangxiaoxiao/flashps` which includes all the dependencies and configurations required to run the experiments. This eliminates the need for complex environment setup. We also provided AWS EC2 instances for evaluation. 
+We provide two types of EC2 instances, one with **A100 GPUs** and the other with **A10 GPUs**.
 
-## Run Flashps with Docker
+## On the machine with A100 GPUs
+Please comment on us in the HotCRP with your public key to get the IP address and access the machine.
+
+### Run FlashPS with Docker
 We have pulled the image on the provided machine, as its size is nearly 100 GiB.
 ```bash
 # We will add your public key to the machine. You can log in to the machine with your private key by replacing the <IP_ADDRESS> with the actual IP.
@@ -26,7 +30,7 @@ conda activate flashps
 
 ```
 
-## End-to-end Performance of OOTD
+### End-to-end Performance of OOTD
 ```bash
 cd /app/FlashPS/scheduler/
 
@@ -71,7 +75,7 @@ python scripts/parse_end2end.py
 ```
 You may compare the figure with Figure 12 in the paper.
 
-## Image Quality Assessment
+### Image Quality Assessment
 Our image quality evaluation ensures that **performance optimizations** do not compromise **output quality**. 
 As generating all images takes hours, we have cached them for evaluation.
 
@@ -82,7 +86,10 @@ bash scripts/test_quality.sh
 ```
 You may compare the printed results with those in Table 2 in the paper.
 
-## End-to-end Performance of SD2
+## On the machine with A10 GPUs
+Please comment on us in the HotCRP with your public key to get the IP address and access the machine.
+
+### End-to-end Performance of SD2
 Because SD2's baseline FISEdit is not compatible with advanced GPUs, we have provided a machine with a pre-configured environment to facilitate execution for review purposes.
 We will add your public key to the machine. You can log in to the machine with your private key by replacing the <SD2_IP_ADDRESS> with the actual IP.
 Please comment us on the HotCRP for the IP address.
@@ -146,7 +153,7 @@ python scripts/parse_end2end.py
 ```
 You may compare the figure with Figure 12 in the paper.
 
-## Distribution of Mask Ratios
+### Distribution of Mask Ratios
 
 In the same machine, which is used to evaluate SD2. 
 ```bash
