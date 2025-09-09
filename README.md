@@ -71,6 +71,16 @@ python scripts/parse_end2end.py
 ```
 You may compare the figure with Figure 12 in the paper.
 
+## Image Quality Assessment
+Our image quality evaluation ensures that **performance optimizations** do not compromise **output quality**. 
+As generating all images takes hours, we have cached them for evaluation.
+
+Evaluate Image Quality:
+```
+cd /app/image-inpainting/
+bash scripts/test_quality.sh 
+```
+
 ## End-to-end Performance of SD2
 Because SD2's baseline FISEdit is not compatible with advanced GPUs, we have provided a machine with a pre-configured environment to facilitate execution for review purposes.
 We will add your public key to the machine. You can log in to the machine with your private key by replacing the <SD2_IP_ADDRESS> with the actual IP.
@@ -134,13 +144,3 @@ python scripts/parse_end2end.py
 
 ```
 You may compare the figure with Figure 12 in the paper.
-
-## Image Quality Assessment
-Our image quality evaluation ensures that **performance optimizations** do not compromise **output quality**. 
-As generating all images takes hours, we have cached them for evaluation.
-
-Evaluate Image Quality:
-```
-cd /app/image-inpainting/
-bash scripts/test_quality.sh 
-```
