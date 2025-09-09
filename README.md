@@ -32,7 +32,7 @@ conda activate flashps
 
 ### End-to-end Performance of OOTD
 ```bash
-cd /app/FlashPS/scheduler/
+cd /app/image-inpainting/scheduler/
 
 # Ensure the repo up-to-date
 git pull
@@ -48,10 +48,10 @@ bash run_server_ootd_no_cb.sh
 # For each baseline, we send requests with different RPS. 
 
 # Send requests to evaluate the baseline TeaCache.
-bash /app/FlashPS/scheduler/test_ootd_teacache.sh
+bash /app/image-inpainting/scheduler/test_ootd_teacache.sh
 
 # Send requests to evaluate the baseline diffusers.
-bash /app/FlashPS/scheduler/test_ootd_diffusers.sh
+bash /app/image-inpainting/scheduler/test_ootd_diffusers.sh
 
 # Remember to kill the server.
 bash kill_server.sh
@@ -64,7 +64,7 @@ bash kill_server.sh
 bash run_server_ootd.sh
 
 # Send requests to evaluate FlashPS.
-bash /app/FlashPS/scheduler/test_ootd_flashps.sh
+bash /app/image-inpainting/scheduler/test_ootd_flashps.sh
 
 # Remember to kill the server.
 bash kill_server.sh
@@ -81,7 +81,7 @@ As generating all images takes hours, we have cached them for evaluation.
 
 Evaluate Image Quality. This may take minutes.
 ```
-cd /app/FlashPS/
+cd /app/image-inpainting/
 bash scripts/test_quality.sh 
 ```
 You may compare the printed results with those in Table 2 in the paper.
