@@ -48,7 +48,7 @@ Because SD2's baseline FISEdit is not compatible with advanced GPUs, we have pro
 ```bash
 
 source activate pytorch
-cd image-inpainting/scheduler
+cd /home/ubuntu/image-inpainting/scheduler
 
 # run flashps server
 bash run_server_sd2_cb.sh
