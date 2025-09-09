@@ -30,6 +30,9 @@ conda activate flashps
 ```bash
 cd /app/image-inpainting/scheduler/
 
+# Ensure the repo up-to-date
+git pull
+
 # Spin up the server to test TeaCache and diffusers baseline. It may take two minutes to start the server.
 # When the server successfully starts, it will print
 # "INFO:     Uvicorn running on http://0.0.0.0:8005 (Press CTRL+C to quit)"
