@@ -1,10 +1,8 @@
 # Artifact Evaluation for Eurosys 2026
-This guide provides step-by-step instructions to reproduce the experiments and results presented in our Flashps paper. Follow these steps to validate our claims regarding **performance improvements** and **image quality preservation**.
+This guide provides step-by-step instructions to reproduce the experiments and results presented in our Flashps paper. Follow these steps to validate our major claims regarding **performance improvements** and **image quality preservation**.
 
-To simplify reproducibility, we provide an off-the-shelf Docker image, `jiangxiaoxiao/flashps` which includes all the dependencies and configurations required to run the experiments. This eliminates the need for complex environment setup. We also provided AWS EC2 instances for evaluation. 
-We provide two types of EC2 instances, one with **A100 GPUs** and the other with **A10 GPUs**.
-
-## On the machine with A100 GPUs
+To simplify reproducibility, we provide an off-the-shelf Docker image, `jiangxiaoxiao/flashps` which includes all the dependencies and configurations required to run the experiments. This eliminates the need for complex environment setup. 
+We also provide an AWS EC2 instance with **A10 GPUs**.
 Please comment on us in the HotCRP with your public key to get the IP address and access the machine.
 
 ### Run FlashPS with Docker
@@ -86,16 +84,15 @@ bash scripts/test_quality.sh
 ```
 You may compare the printed results with those in Table 2 in the paper.
 
-## On the machine with A10 GPUs
-Please comment on us in the HotCRP with your public key to get the IP address and access the machine.
 
 ### End-to-end Performance of SD2
-Because SD2's baseline FISEdit is not compatible with advanced GPUs, we have provided a machine with a pre-configured environment to facilitate execution for review purposes.
-We will add your public key to the machine. You can log in to the machine with your private key by replacing the <SD2_IP_ADDRESS> with the actual IP.
-Please comment us on the HotCRP for the IP address.
+As FISEdit requires a customized environment to execute, we have preconfigured the environment to evaluate the performance of SD2 directly on the machine (not using a Docker container).
+Please log out and re-log in to the machine for the following evaluation.
 
 ```bash
-ssh ubuntu@<SD2_IP_ADDRESS>
+ssh ubuntu@<IP_ADDRESS>
+
+# Then stay on the machine, without the need to use a Docker container.
 ```
 
 
