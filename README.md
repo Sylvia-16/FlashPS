@@ -14,6 +14,10 @@ ssh ubuntu@<IP_ADDRESS>
 # We have pulled the image on the provided machine. You can skip this. On your machine, you can pull the prebuilt Docker image with the following command.
 docker pull jiangxiaoxiao/flashps:latest
 
+# Clear the stopped container, if it exists
+docker kill flashps-ae
+docker rm flashps-ae
+
 # Run the following command to spin up the container. This may take a few minutes.
 docker run -d --name flashps-ae --runtime=nvidia --gpus all --shm-size=16g \
 -e NVIDIA_VISIBLE_DEVICES=all -e CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
