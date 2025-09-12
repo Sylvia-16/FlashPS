@@ -142,11 +142,11 @@ if __name__ == "__main__":
                 # log_folder = cb_dir
                 if log_folder:
                     result = parse_log_for_one_folder(log_folder)
-                    
+
                     # Process each seqlen result
                     for seqlen_name, metrics in result.items():
                         row = {
-                            'name': cb_type,
+                            'name': cb_type if cb_type!='no_cb' else 'diffusers',
                             'rps': float(rps),
                             'avg_latency': metrics['avg_latency'],
                             'p99_latency': metrics['p99_latency'],
