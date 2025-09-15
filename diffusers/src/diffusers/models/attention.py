@@ -486,6 +486,7 @@ class BasicTransformerBlock(nn.Module):
         cached_o = torch.zeros_like(
             edit_config.cached_o[f"o_{edit_config.block_name}_{edit_config.denoising_step}"][0]
         ).cuda(edit_config.device_num)
+        edit_config.max_batch_size = 10
         if edit_config.max_batch_size > 2:
             cached_o = cached_o.repeat(edit_config.max_batch_size // 2, 1, 1)
         return cached_o
@@ -724,6 +725,7 @@ class BasicTransformerBlock(nn.Module):
         if edit_config is not None and edit_config.use_cached_ff:
             mask = edit_config.mask_indices[norm_hidden_states.shape[1]]
             if edit_config.test_varlen:
+                norm_hidden_states = norm_hidden_states.flatten(0, 1)
                 norm_hidden_states = norm_hidden_states[mask, :]
             else:
                 norm_hidden_states = norm_hidden_states[:, mask, :]

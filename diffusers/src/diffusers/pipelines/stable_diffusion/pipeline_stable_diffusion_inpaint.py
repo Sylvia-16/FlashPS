@@ -991,10 +991,10 @@ class StableDiffusionInpaintPipeline(
             origin_shape_0 = down_4096.shape[0]
 
             # indices of mask
-            edit_config.mask_indices[4096] = torch.nonzero(down_4096).squeeze(1)
-            edit_config.mask_indices[1024] = torch.nonzero(down_1024).squeeze(1)
-            edit_config.mask_indices[256] = torch.nonzero(down_256).squeeze(1)
-            edit_config.mask_indices[64] = torch.nonzero(down_64).squeeze(1)
+            edit_config.mask_indices[9216] = torch.nonzero(down_4096).squeeze(1)
+            edit_config.mask_indices[2304] = torch.nonzero(down_1024).squeeze(1)
+            edit_config.mask_indices[576] = torch.nonzero(down_256).squeeze(1)
+            edit_config.mask_indices[144] = torch.nonzero(down_64).squeeze(1)
 
             # edit_config.mask_indices[4096] = edit_config.mask_indices[4096 * 2]
             # edit_config.mask_indices[1024] = edit_config.mask_indices[1024 * 2]
@@ -1769,6 +1769,7 @@ class StableDiffusionInpaintPipeline(
         masked_image_latents_list: List[torch.Tensor],
         edit_config: Optional[Dict[str, Any]] = None,
         cached_o: Optional[torch.Tensor] = None,
+        cached_ff: Optional[torch.Tensor] = None,
         **kwargs,
     ):
         
@@ -1780,7 +1781,7 @@ class StableDiffusionInpaintPipeline(
 
         edit_config = deepcopy(edit_config)
         edit_config.cached_o = cached_o
-        
+        edit_config.cached_ff = cached_ff
         edit_config.denoising_step = cur_denoising_step_list[0]
         batch_cache_map = [0 for _ in range(batch_size)]
         # for i in range(running_batch_size):

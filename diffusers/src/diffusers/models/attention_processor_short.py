@@ -6,7 +6,6 @@ import os
 import time
 from typing import Callable, List, Optional, Tuple, Union, Any, Dict
 
-# import flashinfer
 import torch
 import torch.nn.functional as F
 from flash_attn import flash_attn_varlen_func, flash_attn_func
@@ -1329,10 +1328,6 @@ class FluxAttnProcessor2_0:
 
             key = attn.to_k(hidden_states)
             value = attn.to_v(hidden_states)
-            print("key", key.shape)
-            print("value", value.shape)
-            print("cached_key", cached_key.shape)
-            print("cached_value", cached_value.shape)
             if encoder_hidden_states is not None:
                 # mmdit block
                 key = key.contiguous()
@@ -1730,9 +1725,7 @@ class AttnProcessor2_0:
             query = attn.norm_q(query)
         if attn.norm_k is not None:
             key = attn.norm_k(key)
-        # print("query", query.shape)
-        # print("key", key.shape)
-        # print("value", value.shape)
+   
         if edit_config is not None and edit_config.test_varlen:
             
             hidden_states = flash_attn_varlen_func(
