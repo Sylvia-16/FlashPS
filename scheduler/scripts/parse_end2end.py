@@ -137,6 +137,7 @@ if __name__ == "__main__":
             matching_dir = glob.glob(pattern)
             if len(matching_dir) > 0:
                 # Get the first subdirectory which contains the logs
+                matching_dir.sort(key=lambda x: os.path.getctime(x), reverse=True)
                 log_folder = matching_dir[0]
                 # log_folder = cb_dir
                 if log_folder:
