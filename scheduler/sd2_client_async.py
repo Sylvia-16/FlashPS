@@ -122,15 +122,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--service-id", type=str, default=None)
     parser.add_argument("--action", type=str, choices=["inference"], default="inference")
-    parser.add_argument("--rps", type=float, default=2)
-    parser.add_argument("--interval", type=int, default=2)
+    parser.add_argument("--rps", type=float, default=1)
+    parser.add_argument("--interval", type=int, default=10)
     args = parser.parse_args()
 
     assert args.action == "inference"
 
     # Run the async function
     # edit_config_path = "/home/xjiangbp/image-inpainting/configs/sd2_configs/sd2_use_o_test_varlen.yml"
-    edit_config_path = "/home/xjiangbp/image-inpainting/configs/sd2_configs/sd2_standard.yml"
+    edit_config_path = "/home/ubuntu/image-inpainting/configs/sd2_configs/sd2_use_o_ff_768_async_varlen.yml"
     with open(edit_config_path, 'r') as f:
         config = yaml.safe_load(f)
     edit_config = EditConfig(config)

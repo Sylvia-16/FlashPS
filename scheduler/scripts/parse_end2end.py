@@ -5,8 +5,8 @@ import re
 import glob
 import json
 import pandas as pd
-from collections import defaultdict
 import matplotlib.pyplot as plt
+from collections import defaultdict
 
 def parse_log_for_one_log_file(log_file):
     """
@@ -115,8 +115,8 @@ def get_first_subdirectory(directory_path):
 if __name__ == "__main__":
     import json
     args = argparse.ArgumentParser()
-    args.add_argument("--root_folder", type=str, default="/app/image-inpainting/scheduler/test_ootd_e2e",required=False, help="Root folder containing RPS directories (e.g., ootd)")
-    args.add_argument("--output_csv", type=str, default="/app/image-inpainting/scheduler/end2end_results/result.csv", help="Output CSV file path")
+    args.add_argument("--root_folder", type=str, default="/home/ubuntu/image-inpainting/scheduler/test_sd2_e2e",required=False, help="Root folder containing RPS directories (e.g., ootd)")
+    args.add_argument("--output_csv", type=str, default="/home/ubuntu/image-inpainting/scheduler/end2end_results/result.csv", help="Output CSV file path")
     args = args.parse_args()
 
     all_results = []
@@ -125,29 +125,28 @@ if __name__ == "__main__":
     # ootd_client_teacache
     # ootd_client_no_cb
     # ootd_clinet_flashps
-    log_dirs = glob.glob(os.path.join(args.root_folder, "ootd_*"))
+    log_dirs = glob.glob(os.path.join(args.root_folder, "sd2_*"))
     
  
         # Extract RPS value from directory name
         
         # Process both cb and no_cb directories
-    for cb_type in ['teacache','flashps','no_cb']:
-        for rps in ['1.0','2.25','3.25',]:
-            pattern = os.path.join(args.root_folder,f'ootd_client_{cb_type}_{rps}*')
+    for cb_type in ['fisedit','flashps','no_cb']:
+        for rps in [1.0,2.0,3.0]:
+            pattern = os.path.join(args.root_folder,f'sd2_client_{cb_type}_{rps}*')
             matching_dir = glob.glob(pattern)
             if len(matching_dir) > 0:
                 # Get the first subdirectory which contains the logs
-                matching_dir.sort(key=lambda x: os.path.getctime(x), reverse=True)
                 log_folder = matching_dir[0]
                 # log_folder = cb_dir
                 if log_folder:
                     result = parse_log_for_one_folder(log_folder)
-
+                  
                     # Process each seqlen result
                     for seqlen_name, metrics in result.items():
                         row = {
-                            'name': cb_type if cb_type!='no_cb' else 'diffusers',
-                            'rps': float(rps),
+                            'name': cb_type if cb_type != 'no_cb' else 'diffusers',
+                            'rps': rps,
                             'avg_latency': metrics['avg_latency'],
                             'p99_latency': metrics['p99_latency'],
                             'p95_latency': metrics['p95_latency'],
@@ -158,6 +157,12 @@ if __name__ == "__main__":
                         all_results.append(row)
     
     # Convert to DataFrame and save as CSV
+    df = pd.DataFrame(all_results)
+    df.to_csv(args.output_csv, index=False)
+    
+    print(f"Saved results to {args.output_csv}")
+    
+    # Plot the results
     df = pd.DataFrame(all_results)
     df.to_csv(args.output_csv, index=False)
      # Create line plot
@@ -189,8 +194,6 @@ if __name__ == "__main__":
     else:
         print("No data available for plotting")
     print(f"Saved results to {args.output_csv}")
-
-
 
 
 

@@ -50,9 +50,9 @@ warnings.filterwarnings("ignore", category=UserWarning)
 from sdxl_pipeline_continous_batching import StableDiffusionXLPipeline
 from pipeline_flux_inpaint_continuous_batching import FluxInpaintPipeline
 from diffusers import StableDiffusionInpaintPipeline
-sys.path.append('/app')
-from ootd.ootd.inference_ootd_hd import OOTDiffusionHD
-from ootd.ootd.inference_ootd_dc import OOTDiffusionDC
+# sys.path.append('/home/xjiangbp')
+# from OOTDiffusion.ootd.inference_ootd_hd import OOTDiffusionHD
+# from OOTDiffusion.ootd.inference_ootd_dc import OOTDiffusionDC
 class DistributedWorker:
     def __init__(
         self,
@@ -126,7 +126,9 @@ class DistributedWorker:
         elif self.pipeline_name == "SD2":
             self.pipeline = StableDiffusionInpaintPipeline.from_pretrained(
                 "stabilityai/stable-diffusion-2-inpainting",
+                cache_dir="/home/ubuntu/.cache/huggingface/hub/sd2_inpaint_768/",
                 torch_dtype=torch.float16,
+                local_files_only=True,
             ).to(self.device)
         elif self.pipeline_name == "OOTD_HD":
             self.pipeline = OOTDiffusionHD(gpu_id=self.local_rank)
@@ -148,24 +150,25 @@ class DistributedWorker:
             ]
         elif self.pipeline_name == "SD2":
             self.logger.info(f"SD2 pipeline, max_batch_size: {self.max_batch_size}")
+            print("herererererere")
             self.timesteps_placeholder = [
                 torch.tensor( [0]*timestep_len, dtype=torch.int32, device=self.device )
                 for timestep_len in range( 2*self.max_batch_size + 1 )
             ]
+            print("herererererere")
         elif self.pipeline_name == "OOTD_HD" or self.pipeline_name == "OOTD_DC":
             self.logger.info(f"OOTD pipeline, max_batch_size: {self.max_batch_size}")
             self.timesteps_placeholder = [
                 torch.tensor( [0]*timestep_len, dtype=torch.int32, device=self.device )
                 for timestep_len in range( 2*self.max_batch_size + 1 )
             ]
-        if self.scheduling_baseline != "no_cb":
-            if self.pipeline_name == "SD2" or self.pipeline_name == "OOTD_HD" or self.pipeline_name == "OOTD_DC":
-                self.load_cache_o(self.cache_config)
-                # pass
-            else:
-                
-                self.load_cache_kv(self.cache_config)
-            pass
+        # if self.scheduling_baseline != "no_cb":
+        if self.pipeline_name == "SD2" or self.pipeline_name == "OOTD_HD" or self.pipeline_name == "OOTD_DC":
+            self.load_cache_o(self.cache_config)
+            # pass
+        else:
+            
+            self.load_cache_kv(self.cache_config)
     def load_cache_kv(self, cache_config):
 
         def load_cache_for_one_folder(cache_config, cached_kv_folder):
@@ -235,8 +238,23 @@ class DistributedWorker:
     def load_cache_o(self, cache_config):
         def load_cache_from_one_folder(cached_o_folder, cached_o_files):
             self.cached_o = {}
-            for file in cached_o_files:
+            self.cached_ff = {}
+            self.logger.info(f"Loading cache from {cached_o_folder}, found {len(cached_o_files)} files.")
+            for i, file in enumerate(cached_o_files):
+                self.logger.info(f"Loading file {i+1}/{len(cached_o_files)}: {file}")
                 tmp_key = file.split(".")[0]
+                if file.startswith("ff"):
+                    if tmp_key not in self.cached_ff or self.cached_ff[tmp_key] is None:
+                        self.cached_ff[tmp_key] = []
+                    print("load_ff",tmp_key)
+                    self.cached_ff[tmp_key].append(
+                        torch.load(
+                            os.path.join(cached_o_folder, file),
+                            map_location=torch.device("cpu"),
+                        ).contiguous().pin_memory()
+                    )
+                    continue
+                
                 if tmp_key not in self.cached_o or self.cached_o[tmp_key] is None:
                     self.cached_o[tmp_key] = []
                 # if async_copy, copy to cpu first
@@ -257,20 +275,25 @@ class DistributedWorker:
 
             if isinstance(cache_config.cached_o_folder, list):
                 for folder in cache_config.cached_o_folder:
+                    self.logger.info(f"Checking cache folder: {folder}")
                     cached_o_files = [
                         item for item in os.listdir(folder) if item.endswith(".pt")
                     ]
                     load_cache_from_one_folder(folder, cached_o_files)
             else:
+                folder = cache_config.cached_o_folder
+                self.logger.info(f"Checking cache folder: {folder}")
                 cached_o_files = [
                     item
-                    for item in os.listdir(cache_config.cached_o_folder)
+                    for item in os.listdir(folder)
                     if item.endswith(".pt")
                 ]
                 load_cache_from_one_folder(
-                    cache_config.cached_o_folder, cached_o_files
+                    folder, cached_o_files
                 )
+        self.logger.info("Starting to load cache_o...")
         _load_cache_o(cache_config)
+        self.logger.info("Finished loading cache_o.")
     def _setup_logging(self):
         """Setup logging for this worker"""
         # Create logs directory if it doesn't exist
@@ -574,7 +597,7 @@ class DistributedWorker:
                     while self.scheduling_baseline != "no_cb" and len(active_batch) < self.max_batch_size and not self.request_queue.empty():
                         # get_nowait() is synchronous, so don't use await
                         timestamp, message = self.request_queue.get_nowait()
-                        
+                        print("messagemessagemessagemessagemessagemessage",message)
                         # 标记从队列中获取的请求为已完成
                         self.request_queue.task_done()
                         
@@ -608,11 +631,9 @@ class DistributedWorker:
                     # Remove completed requests from the batch
                     completed_indices = []
                     for i, req in enumerate(active_batch):
-                        print("num_inference_steps",i, req['num_inference_steps'])
-
                         if req["scheduler_steps"] >= req["num_inference_steps"]:
                             # Process and send response for completed request
-                            print("finish_req",req['req_id'])
+                            # print("finish_req",req['req_id'])
                             await self._send_completion_response(req)
                             completed_indices.append(i)
                             # 移除这里的task_done调用，因为我们已经在获取请求时标记过了
@@ -623,7 +644,7 @@ class DistributedWorker:
                     # Remove completed requests from active_batch (in reverse order)
                     for i in reversed(completed_indices):
                         active_batch.pop(i)
-                    # await self._send_steps_update(active_batch)
+                    await self._send_steps_update(active_batch)
                     one_step_process_queue_end = time.time()
                     one_step_process_queue_time = one_step_process_queue_end - one_step_process_queue_start
                     # print(f"One step process queue time: {one_step_process_queue_time}")
@@ -783,7 +804,6 @@ class DistributedWorker:
         pooled_prompt_embeds_list = [ item["pooled_prompt_embeds"] for item in batch ]
         batch[0]["edit_config"].device_num = self.local_rank
         batch[0]["edit_config"].max_batch_size = self.max_batch_size
-
         if hasattr(self, "cached_kv"):
             cached_kv = self.cached_kv
         else:
@@ -875,6 +895,10 @@ class DistributedWorker:
             cached_o = self.cached_o
         else:
             cached_o = None
+        if hasattr(self, "cached_ff"):
+            cached_ff = self.cached_ff
+        else:
+            cached_ff = None
             
         batch[0]["edit_config"].device_num = self.local_rank
         batch[0]["edit_config"].max_batch_size = self.max_batch_size
@@ -894,6 +918,7 @@ class DistributedWorker:
                 prompt_embeds_list=prompt_embeds_list,
                 edit_config=batch[0]["edit_config"],
                 cached_o=cached_o,
+                cached_ff = cached_ff,
             )
         )
         denoising_time = time.time() - denoising_start_time
@@ -922,6 +947,8 @@ class DistributedWorker:
             None,
             lambda: self.pipeline.prepare_for_inference(
                 prompt=inputs["prompt"],
+                height=768,
+                width=768,
                 image_path=inputs["image_path"],
                 mask_image_path=inputs["mask_image_path"],
                 generator=torch.manual_seed(inputs["seed"]),
@@ -984,11 +1011,10 @@ class DistributedWorker:
             return
         
         running_batch_size = len(batch)
-        print("running_batch_size",running_batch_size)
+        
         # Extract current timestep for each request
         cur_timestep = torch.tensor([0.0]*running_batch_size, dtype=torch.float32, device=self.device)
         for i, item in enumerate(batch):
-            print("item",item['timesteps'].shape)
             cur_timestep[i] = item["timesteps"][item["denoising_progress"]]
         print(f"Current timesteps: {cur_timestep}")
         timesteps_list = [item["timesteps"] for item in batch]
@@ -1049,7 +1075,7 @@ class DistributedWorker:
             batch[i]["latents"] = denoising_output["latents"][i]
             batch[i]["denoising_progress"] += 1
             batch[i]['scheduler_steps'] = denoising_output['scheduler_steps'][i]
-            print("scheduler_steps",i, batch[i]['scheduler_steps'])
+            
         # Send current steps info to coordinator
        
 
@@ -1270,7 +1296,9 @@ class Coordinator:
             elif self.pipeline_name == "SD2":
                 self.pipeline = StableDiffusionInpaintPipeline.from_pretrained(
                     "stabilityai/stable-diffusion-2-inpainting",
+                    cache_dir = "/home/ubuntu/.cache/huggingface/hub/sd2_inpaint_768/",
                     torch_dtype=torch.float16,
+                    local_files_only=True,
                 ).to(self.device)
             elif self.pipeline_name == "OOTD_HD":
                 self.pipeline = OOTDiffusionHD(gpu_id=0)
@@ -1539,16 +1567,6 @@ class Coordinator:
                 # Get the next request from queue
                 queue_item = await self.request_queue.get()
                 queue_item_ts = queue_item[0]
-                if self.scheduling_baseline == "no_cb":
-                    idle_workers = [worker_id for worker_id, status in self.worker_status.items() if status["status"] == "idle"]
-                else:
-                    idle_workers = [worker_id for worker_id, status in self.worker_status.items() if status["status"] == "idle" and status["running_batch_size"] < self.worker_max_batch_size]
-                # exclude the coordinator node
-                idle_workers = [worker_id for worker_id in idle_workers if worker_id != "worker_0_0"]
-                if len(idle_workers) == 0:
-                    await asyncio.sleep(0.1)
-                    continue
-                
                 pipeline_name, inputs, req_id = queue_item[1]
                 
                 # 输出当前各worker的负载状态信息
@@ -1671,9 +1689,9 @@ class Coordinator:
                     if response.get("type") == "pong":
                         continue
                     # Handle steps update messages
-                    # if response.get("type") == "steps_update":
-                    #     self._handle_steps_update(worker_id, response)
-                    #     continue
+                    if response.get("type") == "steps_update":
+                        self._handle_steps_update(worker_id, response)
+                        continue
                     
                     # Get the request ID from the response
                     received_req_id = response.get("req_id")
@@ -2043,7 +2061,28 @@ class WorkflowService:
                 # Default to a reasonable value if mask not provided
                 inputs['mask_seq_length'] = 4096
                 print(f"Using default mask_seq_length: {inputs['mask_seq_length']} for req_id: {req_id}")
+        if inputs['edit_config_path'] is not None:
+            # if file not exist, raise error
+            import os
 
+            if not os.path.exists(inputs['edit_config_path']):
+                # create this file and write the default config, but replace the generated_seqlen with mask_seq_length
+                # default config file: /home/ubuntu/image-inpainting/scheduler/default_config.yml
+                edit_config_path = inputs['edit_config_path']
+                mask_seq_length=inputs['mask_seq_length']
+                with open('/home/ubuntu/image-inpainting/scheduler/default_config.yml', 'r') as f:
+                    default_config = f.read()
+                # if parent directory not exist, create it
+                if not os.path.exists(os.path.dirname(edit_config_path)):
+                    os.makedirs(os.path.dirname(edit_config_path))
+                with open(edit_config_path, 'w') as f:
+                    f.write(default_config.replace('generated_seqlen: 1318', f'generated_seqlen: {mask_seq_length}'))
+                print(f"Created edit config file {edit_config_path} with mask_seq_length: {mask_seq_length}")
+
+            else:
+                print(f"Edit config file {inputs['edit_config_path']} already exists")
+
+            
         # Execute workflow and wait for result
         future = self.coordinator.execute_workflow(pipeline_name, inputs, req_id)
         return await future    
@@ -2297,11 +2336,11 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     if args.pipeline_name == "SD2":
-        args.cache_config = "/home/xjiangbp/image-inpainting/scheduler/cache_configs/sd2_cache_config.yml"
+        args.cache_config = "/home/ubuntu/image-inpainting/scheduler/sd2_cache_config.yml"
     elif args.pipeline_name == "OOTD_HD" or args.pipeline_name == "OOTD_DC":
-        args.cache_config = "/app/image-inpainting/scheduler/cache_configs/ootd_cache_config.yml"
+        args.cache_config = "/home/ubuntu/image-inpainting/scheduler/ootd_cache_config.yml"
     else:
-        args.cache_config = "/app/image-inpainting/scheduler/cache_configs/ootd_cache_config.yml"
+        args.cache_config = "/home/ubuntu/image-inpainting/scheduler/cache_config.yml"
     print("schedule_baseline", args.scheduling_baseline)
     # Load DistributedConfig from YAML
     with open(args.config, "r") as f:
