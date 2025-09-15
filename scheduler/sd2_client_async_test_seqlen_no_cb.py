@@ -44,12 +44,7 @@ def setup_logging(log_file, name=None):
     return logger
 
 # Setup main log directory
-log_dir = "/home/ubuntu/image-inpainting/scheduler/test_sd2_e2e"
-os.makedirs(log_dir, exist_ok=True)
-log_dir = log_dir + f"/sd2_client_no_cb_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-os.makedirs(log_dir, exist_ok=True)
-log_file = os.path.join(log_dir, f"sd2_client.log")
-logger = setup_logging(log_file)
+
 
 # Dictionary to store loggers for different seqlens
 seqlen_list_loggers = {}
@@ -311,7 +306,6 @@ def run_inference_async_with_seqlen(
     return response_list
 
 if __name__ == "__main__":
-    logger.info("Starting flux client")
     
     parser = argparse.ArgumentParser()
     parser.add_argument("--service-id", type=str, default=None)
@@ -320,7 +314,12 @@ if __name__ == "__main__":
     parser.add_argument("--interval", type=int, default=1)
     parser.add_argument("--trace_path", type=str, default=None)
     args = parser.parse_args()
-
+    log_dir = "/home/ubuntu/image-inpainting/scheduler/test_sd2_e2e"
+    os.makedirs(log_dir, exist_ok=True)
+    log_dir = log_dir + f"/sd2_client_no_cb_{args.rps}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    os.makedirs(log_dir, exist_ok=True)
+    log_file = os.path.join(log_dir, f"sd2_client.log")
+    logger = setup_logging(log_file)
     assert args.action == "inference"
     request_timestamps = np.load(args.trace_path)
     logger.info(f"Parsed arguments: service-id={args.service_id}, action={args.action}, rps={args.rps}, interval={args.interval}")

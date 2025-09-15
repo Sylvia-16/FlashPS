@@ -438,6 +438,8 @@ def cal_flops(request_length, pipeline_name):
         return cal_flops_flux(request_length)
     elif pipeline_name == "OOTD_HD":
         return cal_flops_ootd(request_length)
+    else:
+        return 0
 def cal_flops_flux(request_length):
     standard_len = 4608
     h = 3072

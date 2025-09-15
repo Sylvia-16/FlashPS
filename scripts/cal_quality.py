@@ -13,12 +13,7 @@ from torchmetrics.multimodal.clip_score import CLIPScore
 from torchmetrics.image.fid import FrechetInceptionDistance
 from torchmetrics.image import StructuralSimilarityIndexMeasure
 from torchmetrics.image import PeakSignalNoiseRatio
-import warnings
 
-# Suppress warnings
-warnings.filterwarnings("ignore", category=FutureWarning)
-warnings.filterwarnings("ignore", message=".*clean_up_tokenization_spaces.*")
-warnings.filterwarnings("ignore", message=".*weights_only.*")
 def preprocess_image(img_path):
     """Preprocess the image for inception model"""
     img = cv2.imread(img_path)
@@ -36,38 +31,26 @@ def preprocess_image(img_path):
 #     return fid_score
 
 def cal_ssim(image1_path, image2_path):
-    """Calculate SSIM between two images using torchmetrics."""
-    try:
-        image1 = Image.open(image1_path).convert('RGB')  # 确保是RGB格式
-        image2 = Image.open(image2_path).convert('RGB')  # 确保是RGB格式
-        
-        # 确保两个图像大小一致
-        width, height = image1.size
-        image2 = image2.resize((width, height), Image.LANCZOS)
-        
-        # 转换为张量
-        array1 = torch.from_numpy(np.array(image1))
-        array2 = torch.from_numpy(np.array(image2))
-        
-        # 打印调试信息
-        
-        # 初始化SSIM度量
-        ssim = StructuralSimilarityIndexMeasure(data_range=(0.0, 255.0))
-        
-        # 确保图像是正确的形状 [B, C, H, W]
-        if len(array1.shape) == 3 and array1.shape[2] == 3:  # HWC格式
-            array1 = array1.permute(2, 0, 1).unsqueeze(0)  # 转为BCHW
-            array2 = array2.permute(2, 0, 1).unsqueeze(0)  # 转为BCHW
-        else:
-            raise ValueError(f"Unexpected image shape: {array1.shape}")
-        
-        # 计算SSIM
-        ssim_score = ssim(array1.float(), array2.float())
-    
-        return ssim_score
-    except Exception as e:
-        print(f"Error calculating SSIM for {image1_path} and {image2_path}: {str(e)}")
-        return torch.tensor(0.0)  # 计算失败时返回0
+    image1 = Image.open(image1_path)
+    image2 = Image.open(image2_path)
+    height = image1.height
+    width = image1.width
+    # Convert images to numpy arrays
+    array1 = torch.from_numpy(np.array(image1))
+    array2 = torch.from_numpy(np.array(image2))
+    print(array1.shape, array2.shape)
+    ssim = StructuralSimilarityIndexMeasure(data_range=(0.0, 255.0))
+
+    # convert to BxCxHxW
+    # gold_images = torch.stack(gold_images, dim=0) * 1.0
+    # pred_images = torch.stack(pred_images, dim=0) * 1.0
+    array1 = array1.view(1, 3, height, width)
+    # add one dimension for numpy array
+
+    array2 = array2.view(1, 3, height, width)
+    ssim_score = ssim(array1, array2)
+
+    return ssim_score
 def calculate_fid(real_images, fake_images):
    
     # clip_metric = CLIPScore(model_name_or_path="openai/clip-vit-base-patch16")
@@ -94,7 +77,7 @@ def calculate_fid(real_images, fake_images):
     # Compute final FID score
     final_fid = fid_metric.compute()
     print(f"Overall FID Score: {final_fid}")
-def cal_clip(fake_images, prompt_folder, type):
+def cal_clip(fake_images, prompt_folder):
     """Calculate CLIP score between images and text prompts derived from their paths."""
     clip_metric = CLIPScore(model_name_or_path="openai/clip-vit-base-patch16")
     
@@ -118,17 +101,14 @@ def cal_clip(fake_images, prompt_folder, type):
         
         # Extract immediate subfolder (assuming structure like .../subfolder/filename.png)
         subfolder = path_parts[-2] if len(path_parts) > 1 else ""
-        if type == "flux":
-            prompt_file_name = f"data_prompt_{image_number}.pt"
-
-            # prompt_file_name = f"target_prompt_{image_number}.pt"
-            # Construct the prompt path using the image number
-            prompt_path = os.path.join(prompt_folder, subfolder, prompt_file_name)
-        else:
-            prompt_file_name = f"target_prompt_{image_number}.pt"
-            prompt_path = os.path.join(prompt_folder, prompt_file_name)
-
-
+        
+        print(f"Path: {fake_images[i]}")
+        print(f"Subfolder: {subfolder}")
+        print(f"Filename: {filename}")
+        print(f"Image Number: {image_number}")
+        prompt_file_name = f"data_prompt_{image_number}.pt"
+        # Construct the prompt path using the image number
+        prompt_path = os.path.join(prompt_folder, subfolder, prompt_file_name)
         
         # Try to read the prompt from file if it exists, otherwise use subfolder and filename
         text_prompt = ""
@@ -138,16 +118,16 @@ def cal_clip(fake_images, prompt_folder, type):
             # Use subfolder and filename as text prompt
             raise ValueError(f"Prompt file not found: {prompt_path}")
         
-        # print(f"Text Prompt: {text_prompt}")
+        print(f"Text Prompt: {text_prompt}")
         
         # Calculate CLIP score (measures how well the image matches the text)
         clip_score = clip_metric(fake_tensor, text_prompt)
         clip_scores.append(clip_score.item())
         
     avg_clip_score = sum(clip_scores) / len(clip_scores) if clip_scores else 0
-  
+    print(f"Average CLIP Score: {avg_clip_score}")
     
-    return avg_clip_score
+    return clip_scores, avg_clip_score
 def cal_psnr(image1_path, image2_path):
     """Calculate Peak Signal-to-Noise Ratio between two images using torchmetrics."""
     image1 = Image.open(image1_path)
@@ -197,100 +177,67 @@ def find_matching_images(dir1, dir2):
     
     return matching_pairs
 
-import os
-import re
-
-def find_matching_images_by_number(dir1, dir2):
-    """Find images where filenames contain the same number in corresponding subfolders of both directories."""
-    matching_pairs = []
+def main():
+    parser = argparse.ArgumentParser(description='Compare image quality using FID score')
+    # parser.add_argument('--dir1', type=str, default='/project/infattllm/xjiangbp/flux_inpainting/standard_img_flux/',help='First directory containing images')
+    # parser.add_argument('--dir2', type=str, default='/project/infattllm/xjiangbp/flux_inpainting/teacache_flux_6/',help='Second directory containing images')
+    # parser.add_argument('--prompt_folder', type=str, default='/project/infattllm/xjiangbp/test_image/')
+    parser.add_argument('--dir1', type=str, default='/project/infattllm/xjiangbp/ootd/standard_img_ootd',help='First directory containing images')
+    parser.add_argument('--dir2', type=str, default='/project/infattllm/xjiangbp/ootd/use_o/',help='Second directory containing images')
+    parser.add_argument('--prompt_folder', type=str, default='/project/infattllm/xjiangbp/test_image/')
+    args = parser.parse_args()
+    # Find matching images
+    matching_pairs = find_matching_images(args.dir1, args.dir2)
     
-    # Helper function to extract the first number from a filename
-    def extract_number(filename):
-        match = re.search(r'\d+', filename)
-        return match.group() if match else None
+    if not matching_pairs:
+        print("No matching image files found between the two directories.")
+        return
     
-    # Walk through all subdirectories in dir1
-    for root, _, files in os.walk(dir1):
-        # Get the relative path from dir1
-        rel_path = os.path.relpath(root, dir1)
-        # Construct the corresponding path in dir2
-        corresponding_dir = os.path.join(dir2, rel_path) if rel_path != '.' else dir2
-        # Skip if corresponding directory doesn't exist in dir2
-        if not os.path.exists(corresponding_dir):
-            continue
-            
-        # Check each file in current dir1 subdirectory
-        for file in files:
-            # Only consider image files
-            if file.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff')):
-                number1 = extract_number(file)
-                if not number1:
-                    continue
-                
-                # Check for matching files in dir2
-                for file2 in os.listdir(corresponding_dir):
-                    if file2.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff')):
-                        number2 = extract_number(file2)
-                        if number1 == number2:
-                            file1_path = os.path.join(root, file)
-                            file2_path = os.path.join(corresponding_dir, file2)
-                            # Skip if path contains "collected"
-                            if "collected_images" in file1_path or "collected_images" in file2_path:
-                                continue
-                            matching_pairs.append((file1_path, file2_path))
-                            break  # Stop searching after finding a match
-    return matching_pairs
-def cal_quality_for_image_pairs(matching_pairs, name):
+    print(f"Found {len(matching_pairs)} matching image files.")
+    
     # Calculate FID score
     images1 = [pair[0] for pair in matching_pairs]
     images2 = [pair[1] for pair in matching_pairs]
     
 
     avg_ssim = 0
+    avg_psnr = 0
     for i in range(len(images1)):
         ssim_score = cal_ssim(images1[i], images2[i])
+        psnr_score = cal_psnr(images1[i], images2[i])
+        print(f"SSIM Score: {images1[i]} {images2[i]} {ssim_score}")
+        print(f"PSNR Score: {images1[i]} {images2[i]} {psnr_score}")
         avg_ssim+=ssim_score
+        avg_psnr+=psnr_score
     avg_ssim = avg_ssim/len(images1)
-    return avg_ssim
-def main():
-    parser = argparse.ArgumentParser(description='Compare image quality using FID score')
-    parser.add_argument('--dir1', type=str, default='/app/ootd/standard_img_ootd/',help='First directory containing images')
-    parser.add_argument('--dir2', type=str, default='/app/ootd/use_o/',help='Second directory containing images')
-    parser.add_argument('--dir3', type=str, default='/app/ootd/new_standard_img_ootd_teacache_4/',help='Third directory containing images')
-    parser.add_argument('--name1', type=str,default='a')
-    parser.add_argument('--name2', type=str,default='teacache')
-    parser.add_argument('--model_name', type=str, default=None)
-    parser.add_argument('--prompt_type', type=str,default=None)
-    parser.add_argument('--prompt_folder', type=str, default=None)
-    args = parser.parse_args()
-    # Find matching images
-   
-    matching_pairs = find_matching_images_by_number(args.dir1, args.dir2)
-    matching_pairs1 = find_matching_images_by_number(args.dir1, args.dir3)
-    # if not matching_pairs:
-    #     print("No matching image files found between the two directories.")
-    #     return
-    
-    print(f"=====Image Quality of model {args.model_name}======")
-    ssim1 = cal_quality_for_image_pairs(matching_pairs, args.name1)
-    ssim2 = cal_quality_for_image_pairs(matching_pairs1, args.name2)
-    print(f"{args.name1} SSIM: {ssim1}")
-    print(f"{args.name2} SSIM: {ssim2}")
-    if args.prompt_folder is not None:
-        images1 = [pair[0] for pair in matching_pairs]
-        images2 = [pair[1] for pair in matching_pairs]
-        images3 = [pair[1] for pair in matching_pairs1]
-        clip_score = cal_clip(images1, args.prompt_folder, args.prompt_type)
-        print("diffusers clip:",clip_score)
+    avg_psnr = avg_psnr/len(images1)
+    print(f"Average SSIM Score: {avg_ssim}")
+    print(f"Average PSNR Score: {avg_psnr}")
 
-        clip_score = cal_clip(images2, args.prompt_folder, args.prompt_type)
-        print(f"{args.name1} clip:",clip_score)
+    # # Calculate FID for individual image pairs
+    # # print("Calculating FID for individual image pairs:")
+    fid_score = calculate_fid(images1, images2)
+    print(f"Average fid {fid_score}")
+    # # Calculate FID for the entire dataset
+    # print("\nCalculating FID for the entire dataset:")
+    # clip_score = cal_clip(images2, args.prompt_folder)
 
-        clip_score = cal_clip(images3, args.prompt_folder, args.prompt_type)
-
-        print(f"{args.name2} clip",clip_score)
 if __name__ == "__main__":
     main()
+# FLUX
+# Average SSIM Score: 0.880126416683197
+# Average FID score: 0.04090195149183273
+# Average CLIP score: 30.90982951337134
+
+# TEACACHE FLUX 0.6
+# CLIP:30.79946631716009
+# Average SSIM Score: 0.805854320526123
+# Overall FID Score: 0.05508570373058319
+
+# OOTD
+# Average SSIM Score: 0.990889847278595
+# Average PSNR Score: 34.81057357788086
+# Overall FID Score: 0.009806415997445583
 
 
 

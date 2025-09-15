@@ -13,6 +13,11 @@ class NodeConfig:
 class DistributedConfig:
     nodes: List[NodeConfig]
     port: int = 29500
+    hetu_config: dict = None
+    
+    def __post_init__(self):
+        if self.hetu_config is None:
+            self.hetu_config = {}
 
     @property
     def world_size(self) -> int:
